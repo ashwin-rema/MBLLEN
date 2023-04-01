@@ -5,6 +5,7 @@ from keras import backend as K
 from keras.models import Model
 from data_load import Dataloader
 from glob import glob
+from keras.utils import plot_model
 import tensorflow as tf
 import numpy as np
 import keras
@@ -12,6 +13,9 @@ import os
 import random
 import Network
 import utls
+
+
+
 
 def my_loss(y_true, y_pred):
     MAE_loss = K.mean(K.abs(y_pred[:,:,:,:3] - y_true))
@@ -27,7 +31,7 @@ def my_loss(y_true, y_pred):
     gray_sort = tf.nn.top_k(-gray, 256 * 256)[0]
     yu = gray_sort[:, index]
     yu = tf.expand_dims(tf.expand_dims(yu, -1), -1)
-    mask = tf.to_float(gray1 <= yu)
+    mask = tf.cast(gray1 <= yu,tf.float32)
     mask1 = tf.expand_dims(mask, -1)
     mask = tf.concat([mask1, mask1, mask1], -1)
 
@@ -61,7 +65,7 @@ img_cols = 256
 img_channels = 3
 crop_shape = (img_rows, img_cols, img_channels)
 input_shape = (img_rows, img_cols, img_channels*2)
-dataset_name = 'dark'
+dataset_name = 'dataset'
 data_loader = Dataloader(dataset_name=dataset_name, crop_shape=(img_rows, img_cols))
 
 # Build the network
@@ -93,7 +97,7 @@ combined.compile(loss=my_loss,
                  metrics=[utls.bright_mae, utls.bright_mse, utls.bright_psnr, utls.bright_SSIM, utls.bright_AB],
                  optimizer=opt)
 
-# plot_model(mbllen, to_file='./model.png', show_shapes=True)
+plot_model(mbllen, to_file='./model.png', show_shapes=True)
 combined.summary()
 
 def scheduler(epoch):
@@ -115,8 +119,10 @@ class Show_History(keras.callbacks.Callback):
         modelname = './models/' + str(num_epoch) + '_' + dataset_name + '_base.h5'
         mbllen.save_weights(modelname)
 
+        os.chdir('D:\My pro-files\My files\MBLLEN\MBLLEN\MBLLEN-master\main')
+
         # test val data
-        path = glob('../dataset/test/*.jpg')
+        path = glob('Images\*')
         number = 0
         psnr_ave = 0
 
@@ -125,6 +131,7 @@ class Show_History(keras.callbacks.Callback):
                 break
 
             img_B_path = path[i]
+            
             img_B = utls.imread_color(img_B_path)
 
             path_mid = os.path.split(img_B_path)
@@ -186,3 +193,4 @@ combined.fit(
         epochs=200,
         callbacks=[tbCallBack, show_history, change_lr, nanstop, reducelearate])
 print('Done!')
+

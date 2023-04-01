@@ -11,7 +11,11 @@ class Dataloader():
         self.crop_shape = crop_shape
 
     def imread_color(self, path):
+        if path is None:
+            return None
         img = cv.imread(path, cv.IMREAD_COLOR | cv.IMREAD_ANYDEPTH)/255.
+        print(path)
+        print(img)
         b, g, r = cv.split(img)
         img_rgb = cv.merge([r, g, b])
         return img_rgb
@@ -22,10 +26,12 @@ class Dataloader():
         cv.imwrite(path, img_rgb)
 
     def load_data(self, batch_size=16):
-        path = glob('../dataset/train/*.jpg')
+        os.chdir('D:\My pro-files\My files\MBLLEN\MBLLEN\MBLLEN-master\main')
+        path = glob('Images\*')
         self.n_batches = int(len(path) / batch_size)
         while 1:
             random.shuffle(path)
+            
             for i in range(self.n_batches - 1):
                 batch_path = path[i * batch_size:(i + 1) * batch_size]
                 input_imgs = np.empty((batch_size, self.crop_shape[0], self.crop_shape[1], 6), dtype="float32")
@@ -34,10 +40,20 @@ class Dataloader():
                 number = 0
                 for img_B_path in batch_path:
                     img_B = self.imread_color(img_B_path)
+                    if img_B is None:
+                        continue
                     path_mid = os.path.split(img_B_path)
+                    if path_mid is None:
+                        continue
                     path_A_1 = path_mid[0] + '_' + self.dataset_name
+                    if path_A_1 is None:
+                        continue
                     path_A = os.path.join(path_A_1, path_mid[1])
+                    if path_A is None:
+                        continue
                     img_A = self.imread_color(path_A)
+                    if img_A is None:
+                        continue
 
                     nw = random.randint(0, img_B.shape[0] - self.crop_shape[0])
                     nh = random.randint(0, img_B.shape[1] - self.crop_shape[1])
@@ -59,3 +75,6 @@ class Dataloader():
                     gt[number, :, :, :] = crop_img_B
                     number += 1
                 yield input_imgs, gt
+
+           
+
