@@ -9,3 +9,4 @@ python train.py --use_gpu=1 --gpu_idx=0 --gpu_mem=0.5 --phase=train  --epoch=20 
 python test.py -i input_images -r figs -m Syn_img_lowlight
 
 python train.py --use_gpu=1 --gpu_idx=0 --gpu_mem=0.5 --phase=train  --epoch=20 --batch_size=16 --patch_size=48 --start_lr=0.001 --eval_every_epoch=1 -i input_images -r figs -m LOL_img_lowlight
+

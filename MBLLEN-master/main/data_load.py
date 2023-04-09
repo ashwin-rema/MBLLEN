@@ -4,6 +4,7 @@ import random
 import scipy
 import os
 import cv2 as cv
+from numba import cuda,jit
 
 class Dataloader():
     def __init__(self, dataset_name, crop_shape=(256, 256)):
@@ -25,6 +26,7 @@ class Dataloader():
         img_rgb = cv.merge([b, g, r])
         cv.imwrite(path, img_rgb)
 
+    @jit(target_backend='cuda')
     def load_data(self, batch_size=16):
         os.chdir('D:\My pro-files\My files\MBLLEN\MBLLEN\MBLLEN-master\main')
         path = glob('Images\*')

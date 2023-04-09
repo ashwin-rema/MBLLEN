@@ -4,27 +4,34 @@ import numpy as np
 import scipy
 import os
 import cv2 as cv
+from numba import cuda,jit
 
+@jit(target_backend='cuda')
 def bright_mae(y_true, y_pred):
     return K.mean(K.abs(y_pred[:,:,:,:3] - y_true[:,:,:,:3]))
 
+@jit(target_backend='cuda')
 def bright_mse(y_true, y_pred):
     return K.mean((y_pred[:,:,:,:3] - y_true[:,:,:,:3])**2)
 
+@jit(target_backend='cuda')
 def bright_AB(y_true, y_pred):
             return K.abs(K.mean(y_true[:,:,:,:3])-K.mean(y_pred[:,:,:,:3]))
 
+@jit(target_backend='cuda')
 def log10(x):
     numerator = K.log(x)
     denominator = K.log(K.constant(10, dtype=numerator.dtype))
     return numerator / denominator
 
+@jit(target_backend='cuda')
 def bright_psnr(y_true, y_pred):
     mse = K.mean((K.abs(y_pred[:,:,:,:3] - y_true[:,:,:,:3])) ** 2)
     max_num = 1.0
     psnr = 10 * log10(max_num ** 2 / mse)
     return psnr
 
+@jit(target_backend='cuda')
 def _tf_fspecial_gauss(size, sigma):
     """Function to mimic the 'fspecial' gaussian MATLAB function
     """
@@ -42,6 +49,7 @@ def _tf_fspecial_gauss(size, sigma):
     g = tf.exp(-((x**2 + y**2)/(2.0*sigma**2)))
     return g / tf.reduce_sum(g)
 
+@jit(target_backend='cuda')
 def tf_ssim(img1, img2, cs_map=False, mean_metric=True, size=11, sigma=1.5):
     window = _tf_fspecial_gauss(size, sigma) # window shape [size, size]
     K1 = 0.01
@@ -69,6 +77,7 @@ def tf_ssim(img1, img2, cs_map=False, mean_metric=True, size=11, sigma=1.5):
         value = tf.reduce_mean(value)
     return value
 
+@jit(target_backend='cuda')
 def tf_ms_ssim(img1, img2, mean_metric=True, level=5):
     weight = tf.constant([0.0448, 0.2856, 0.3001, 0.2363, 0.1333], dtype=tf.float32)
     mssim = []
@@ -93,10 +102,12 @@ def tf_ms_ssim(img1, img2, mean_metric=True, level=5):
         value = tf.reduce_mean(value)
     return value
 
+@jit(target_backend='cuda')
 def bright_SSIM(y_true, y_pred):
     SSIM_loss = tf_ssim(tf.expand_dims(y_pred[:,:,:,0], -1), tf.expand_dims(y_true[:,:,:,0], -1))+tf_ssim(tf.expand_dims(y_pred[:,:,:,1], -1), tf.expand_dims(y_true[:,:,:,1], -1)) + tf_ssim(tf.expand_dims(y_pred[:,:,:,2], -1), tf.expand_dims(y_true[:,:,:,2], -1))
     return SSIM_loss/3
 
+@jit(target_backend='cuda')
 def psnr_cau(y_true, y_pred):
     mse = np.mean((np.abs(y_pred - y_true)) ** 2)
     max_num = 1.0

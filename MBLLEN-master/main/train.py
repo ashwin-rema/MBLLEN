@@ -13,10 +13,11 @@ import os
 import random
 import Network
 import utls
+from numba import cuda,jit
 
 
 
-
+@jit(target_backend='cuda')
 def my_loss(y_true, y_pred):
     MAE_loss = K.mean(K.abs(y_pred[:,:,:,:3] - y_true))
     SSIM_loss = utls.tf_ssim(tf.expand_dims(y_pred[:, :, :, 0], -1),tf.expand_dims(y_true[:, :, :, 0], -1)) + utls.tf_ssim(
@@ -100,6 +101,7 @@ combined.compile(loss=my_loss,
 plot_model(mbllen, to_file='./model.png', show_shapes=True)
 combined.summary()
 
+@jit(target_backend='cuda')
 def scheduler(epoch):
     lr = K.eval(combined.optimizer.lr)
     print("LR =", lr)
@@ -108,6 +110,7 @@ def scheduler(epoch):
 
 num_epoch = 0
 class Show_History(keras.callbacks.Callback):
+    @jit(target_backend='cuda')
     def on_epoch_end(self, val_loss=None, logs=None):
         # save model
         global num_epoch
@@ -171,6 +174,7 @@ class Show_History(keras.callbacks.Callback):
         print("[Epoch %d]  [PSNR_AVE :%f]" % (num_epoch,  psnr_ave))
         print('------------------------------------------------')
 
+    @jit(target_backend='cuda')
     def on_batch_end(self, batch, logs={}):
         print(' - LR = ', K.eval(self.model.optimizer.lr))
         fileObject = open("./trainList.txt", 'a')
